@@ -175,7 +175,8 @@ corresponding fields."
     (goto-char (point-max))
     (insert
      (format "#+buy:  %s (+ %s %s) => %s, Invoice: %s\n"
-             (format-time-string "%F") stock quantity total invoice-code))))
+             ;; The discrpancy with `invtr-remove-stock' is intentional.
+             (format-time-string "%Y%m%d_%H%M%S") stock quantity total invoice-code))))
 
 (defvar invtr--remove-stock-quantity-hist '())
 
