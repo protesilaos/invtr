@@ -183,7 +183,7 @@ corresponding fields."
   "Remove QUANTITY from stock."
   (interactive
    (list
-    (read-string "Quantity added: " nil 'invtr--remove-stock-quantity-hist)))
+    (read-string "Quantity sold/removed: " nil 'invtr--remove-stock-quantity-hist)))
   (let* ((contents (buffer-substring-no-properties (point-min) (point-max)))
          (regexp "^\\(#\\+quantity:\\)\s+\\([0-9a-z]+\\)$")
          (datum (progn
