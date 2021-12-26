@@ -24,7 +24,7 @@
 
 ;;; Commentary:
 ;;
-;; INVTR or "Inventory" or else "INVTR Never Vindicates Tactless
+;; INVTR or "Inventory" or else "INVTR Needn't Vindicate Thorough
 ;; Rationalists" is toy of an inventory management setup that handles
 ;; the creation of entries and the recording of data within them.  It
 ;; does not reinvent grep, find, dired, and friends.  Just use those.
