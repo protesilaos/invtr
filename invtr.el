@@ -151,6 +151,30 @@ corresponding fields."
 (defvar invtr--add-acquisition-quantity-hist '())
 (defvar invtr--add-acquisition-invoice-hist '())
 
+(defun invtr--maybe-add-records-heading ()
+  "Add a heading for records, if necessary."
+  (unless (search-forward "* Records" nil t)
+    (goto-char (point-max))
+    (insert "\n* Records\n")))
+
+(defun invtr--find-key-valua-pair (regexp)
+  "Produce a cons cell from REGEXP by searching the file."
+  (goto-char (point-min))
+  (re-search-forward regexp)
+  (cons (match-string-no-properties 1) (match-string-no-properties 2)))
+
+(defun invtr--make-replacement (regexp stock total)
+  "Help `invtr-add-acquisition' operate on the available stock.
+REGEXP is the key to search for in the file.  STOCK is the
+available quantity.  TOTAL is the stock after the performed
+operation."
+  (goto-char (point-min))
+  (re-search-forward regexp nil t)
+  (re-search-backward stock nil t)
+  (replace-match total)
+  (invtr--maybe-add-records-heading)
+  (goto-char (point-max)))
+
 (defun invtr-add-acquisition (quantity invoice-code)
   "Add acquisition record for QUANTITY with INVOICE-CODE."
   (interactive
@@ -158,21 +182,11 @@ corresponding fields."
     (read-string "Quantity added: " nil 'invtr--add-acquisition-quantity-hist)
     (read-string "New invoice code: " nil 'invtr--add-acquisition-invoice-hist)))
   (let* ((regexp "^\\(#\\+quantity:\\)\s+\\([0-9a-z]+\\)$")
-         (datum (progn
-                  (goto-char (point-min))
-                  (re-search-forward regexp)
-                  (cons (match-string-no-properties 1) (match-string-no-properties 2))))
+         (datum (invtr--find-key-valua-pair regexp))
          (key (car datum))
          (stock (cdr datum))
          (total (number-to-string (+ (string-to-number stock) (string-to-number quantity)))))
-    (goto-char (point-min))
-    (re-search-forward regexp nil t)
-    (re-search-backward stock nil t)
-    (replace-match total)
-    (unless (search-forward "* Records" nil t)
-      (goto-char (point-max))
-      (insert "\n* Records\n"))
-    (goto-char (point-max))
+    (invtr--make-replacement regexp stock total)
     (insert
      (format "#+buy:  %s (+ %s %s) => %s, Invoice: %s\n"
              ;; The discrpancy with `invtr-remove-stock' is intentional.
@@ -187,21 +201,11 @@ corresponding fields."
     (read-string "Quantity sold/removed: " nil 'invtr--remove-stock-quantity-hist)))
   (let* ((contents (buffer-substring-no-properties (point-min) (point-max)))
          (regexp "^\\(#\\+quantity:\\)\s+\\([0-9a-z]+\\)$")
-         (datum (progn
-                  (goto-char (point-min))
-                  (re-search-forward regexp)
-                  (cons (match-string-no-properties 1) (match-string-no-properties 2))))
+         (datum (invtr--find-key-valua-pair regexp))
          (key (car datum))
          (stock (cdr datum))
          (total (number-to-string (- (string-to-number stock) (string-to-number quantity)))))
-    (goto-char (point-min))
-    (re-search-forward regexp nil t)
-    (re-search-backward stock nil t)
-    (replace-match total)
-    (unless (search-forward "* Records" nil t)
-      (goto-char (point-max))
-      (insert "\n* Records\n"))
-    (goto-char (point-max))
+    (invtr--make-replacement regexp stock total)
     (insert
      (format "#+sell: %s (- %s %s) => %s\n"
              (format-time-string "%F") stock quantity total))))
