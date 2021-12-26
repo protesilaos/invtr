@@ -1,4 +1,4 @@
-;;; invtr.el --- INVTR Never Vindicates Tactless Rationalists -*- lexical-binding: t -*-
+;;; invtr.el --- INVTR Needn't Vindicate Thorough Rationalists -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2021  Protesilaos Stavrou
 
