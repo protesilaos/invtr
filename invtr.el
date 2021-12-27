@@ -240,7 +240,10 @@ points, such as 5 => 5.00."
     (invtr--make-replacement regexp stock total)
     (insert
      (format "#+buy:  %s (+ %s %s) => %s, Invoice: %s\n"
-             ;; The discrpancy with `invtr-remove-stock' is intentional.
+             ;; The discrepancy with `invtr-remove-stock' is intentional
+             ;; because we may have a scenario where we grep for "new
+             ;; items" based on a timestamp which would cover those
+             ;; #+buy entries as well as the #+orig_id.
              (format-time-string "%Y%m%d_%H%M%S") stock quantity total invoice-code))))
 
 (defvar invtr--remove-stock-quantity-hist '())
