@@ -209,7 +209,7 @@ NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
   (cons (match-string-no-properties 1) (match-string-no-properties 2)))
 
 (defun invtr--make-replacement (regexp stock total)
-  "Help `invtr-add-acquisition' operate on the available stock.
+  "Help `invtr-add-acquisition', `invtr-remove-stock' restock.
 REGEXP is the key to search for in the file.  STOCK is the
 available quantity.  TOTAL is the stock after the performed
 operation."
