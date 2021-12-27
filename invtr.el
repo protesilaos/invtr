@@ -165,7 +165,7 @@ Used in `invtr-usls-new-note'."
          (dimensions (read-string "Dimensions (e.g 200x100cm): " nil 'invtr--dimensions-history))
          (weight (read-string "Weight (e.g 150g): " nil 'invtr--weight-history))
          (filename (invtr--file-name-construction path id categories slug dimensions weight price))
-         (truecost (invtr--new-note-discount cost discount))
+         (truecost (invtr--new-truecost-from-discount cost discount))
          (dimensions-p (and dimensions (not (string-empty-p dimensions))))
          (weight-p (and weight (not (string-empty-p weight)))))
     (with-current-buffer (find-file filename)
@@ -257,6 +257,61 @@ operation."
     (insert
      (format "#+sell: %s (- %s %s) => %s\n"
              (format-time-string "%F") stock quantity total))))
+
+(defun invtr--reset-cost (cost)
+  "Reset file's cost entry to COST.
+Helper for `invtr-reset-price-discount'."
+  (let* ((regexp "^\\(#\\+cost:\\)\s+\\([0-9a-z.,]+\\)$")
+         (datum (invtr--find-key-valua-pair regexp))
+         (key (car datum))
+         (old-cost (cdr datum)))
+    (invtr--make-replacement regexp old-cost cost)
+    (cons old-cost cost)))
+
+(defun invtr--reset-discount (discount)
+  "Reset file's discount entry to DISCOUNT.
+Helper for `invtr-reset-price-discount'."
+  (let* ((regexp "^\\(#\\+discount:\\)\s+\\([0-9a-z.,]+\\)%$")
+         (datum (invtr--find-key-valua-pair regexp))
+         (key (car datum))
+         (old-discount (cdr datum)))
+    (invtr--make-replacement regexp old-discount discount)
+    (cons old-discount discount)))
+
+(defun invtr--reset-truecost (truecost)
+  "Reset file's truecost entry to TRUECOST.
+Helper for `invtr-reset-price-discount'."
+  (let* ((regexp "^\\(#\\+truecost:\\)\s+\\([0-9a-z.,]+\\)$")
+         (datum (invtr--find-key-valua-pair regexp))
+         (key (car datum))
+         (old-truecost (cdr datum)))
+    (invtr--make-replacement regexp old-truecost truecost)
+    (cons old-truecost truecost)))
+
+;;;###autoload
+(defun invtr-reset-price-discount (cost discount)
+  "Write COST and recalculate true cost given DISCOUNT."
+  (interactive
+   (list
+    (read-string "New cost: " nil 'invtr--add-acquisition-quantity-history)
+    (read-string "New discount (number without %): " nil 'invtr--add-acquisition-invoice-history)))
+  (let* ((costs (invtr--reset-cost cost))
+         (old-cost (car costs))
+         (new-cost (cdr costs))
+         (discounts (invtr--reset-discount discount))
+         (old-discount (car discounts))
+         (new-discount (cdr discounts))
+         (truecost (invtr--new-truecost-from-discount cost discount))
+         (truecosts (invtr--reset-truecost truecost))
+         (old-truecost (car truecosts))
+         (new-truecost (cdr truecosts)))
+    (insert
+     ;; NOTE the (% X Y) is not Lisp notation.  It just makes it easier
+     ;; to parse a long list of such entries with + (acquisitions), -
+     ;; (sales), % (price changes).
+     (format "#+cost: %s (%% %s %s) => %s :: Old cost, discount, true cost: (%% %s %s) => %s\n"
+             (format-time-string "%F") cost discount truecost
+             old-cost old-discount old-truecost))))
 
 (defun invtr-usls-mode-activate ()
   "Activate usls mode when inside `invtr-directory'."
