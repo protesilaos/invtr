@@ -58,6 +58,7 @@ and that categories are inferred from existing files, all of
 which are available for completion.")
 
 (defvar invtr--cost-history '())
+(defvar invtr--discount-history '())
 (defvar invtr--productID-history '())
 (defvar invtr--producer-history '())
 (defvar invtr--producer-history '())
@@ -100,6 +101,33 @@ corresponding fields."
 ;;       (price "6"))
 ;;   (invtr--file-name-construction path id categories slug dimensions weight price))
 
+;; NOTE 2021-12-27: Copied from my prot-common.el
+(defun invtr-reverse-percentage (number percent change-p)
+  "Determine the original value of NUMBER given PERCENT.
+
+CHANGE-P should specify the increase or decrease.  For simplicity,
+nil means decrease while non-nil stands for an increase.
+
+NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
+  (unless (numberp number)
+    (user-error "NUMBER must satisfy numberp"))
+  (unless (natnump percent)
+    (user-error "PERCENT must satisfy natnump"))
+  (let* ((pc (/ (float percent) 100))
+         (pc-change (if change-p (+ 1 pc) pc))
+         (n (if change-p pc-change (float (- 1 pc-change)))))
+    (/ number n)))
+
+(defun invtr--new-note-discount (cost discount)
+  "Find the original value of COST given DISCOUNT.
+Used in `invtr-usls-new-note'."
+  (if (and discount (not (string-empty-p discount)))
+      (format "%.2f"
+              (invtr-reverse-percentage (string-to-number cost)
+                                        (string-to-number discount)
+                                        nil))
+    ""))
+
 ;;;###autoload
 (defun invtr-usls-new-note ()
   "Variant of `usls-new-note'."
@@ -113,14 +141,16 @@ corresponding fields."
          (path (file-name-as-directory usls-directory))
          (id (format-time-string usls-id))
          (date (format-time-string "%F"))
-         (cost (read-string "Cost of item: " nil 'invtr--cost-history))
-         (productID (read-string "Product number (from producer): " nil 'invtr--productID-history))
+         (cost (format "%.2f" (read-number "Cost of item: " nil 'invtr--cost-history)))
+         (discount (format "%s%%" (read-number "Did the cost include a discount? (number without % sign): " nil 'invtr--discount-history)))
+         (productID (read-string "Product number/code (from producer): " nil 'invtr--productID-history))
          (producer (read-string "Producer or supplier and Invoice No. (e.g. NAME #123456): " nil 'invtr--producer-history))
-         (price (read-string "Price we sell at: " nil 'invtr--price-history))
-         (quantity (read-string "Total quantity: " nil 'invtr--quantity-history))
+         (price (format "%.2f" (read-number "Price we sell at: " nil 'invtr--price-history)))
+         (quantity (read-string "Total quantity (e.g. '50' for pieces, '2x10' for sets): " nil 'invtr--quantity-history))
          (dimensions (read-string "Dimensions (e.g 200x100cm): " nil 'invtr--dimensions-history))
          (weight (read-string "Weight (e.g 150g): " nil 'invtr--weight-history))
          (filename (invtr--file-name-construction path id categories slug dimensions weight price))
+         (truecost (invtr--new-note-discount cost discount))
          (dimensions-p (and dimensions (not (string-empty-p dimensions))))
          (weight-p (and weight (not (string-empty-p weight)))))
     (with-current-buffer (find-file filename)
@@ -131,7 +161,8 @@ corresponding fields."
                "#+orig_id:    " id "\n"
                "#+category:   " (usls--categories-capitalize categories) "\n"
                "#+cost:       " cost "\n"
-               "#+totalcost:  " "" "\n"
+               "#+dicount:    " discount "\n"
+               "#+truecost:   " truecost "\n"
                "#+producer:   " producer "\n"
                "#+productID:  " productID "\n"
                "#+price:      " price "\n"
