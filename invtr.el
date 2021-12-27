@@ -206,6 +206,7 @@ operation."
   (invtr--maybe-add-records-heading)
   (goto-char (point-max)))
 
+;;;###autoload
 (defun invtr-add-acquisition (quantity invoice-code)
   "Add acquisition record for QUANTITY with INVOICE-CODE."
   (interactive
@@ -225,6 +226,7 @@ operation."
 
 (defvar invtr--remove-stock-quantity-hist '())
 
+;;;###autoload
 (defun invtr-remove-stock (quantity)
   "Remove QUANTITY from stock."
   (interactive
