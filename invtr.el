@@ -202,7 +202,7 @@ NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
     (goto-char (point-max))
     (insert "\n* Records\n")))
 
-(defun invtr--find-key-valua-pair (regexp)
+(defun invtr--find-key-value-pair (regexp)
   "Produce a cons cell from REGEXP by searching the file."
   (goto-char (point-min))
   (re-search-forward regexp)
@@ -228,7 +228,7 @@ operation."
     (read-string "Quantity added: " nil 'invtr--add-acquisition-quantity-history)
     (read-string "New invoice code: " nil 'invtr--add-acquisition-invoice-history)))
   (let* ((regexp "^\\(#\\+quantity:\\)\s+\\([0-9a-z]+\\)$")
-         (datum (invtr--find-key-valua-pair regexp))
+         (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
          (stock (cdr datum))
          (total (number-to-string (+ (string-to-number stock) (string-to-number quantity)))))
@@ -248,7 +248,7 @@ operation."
     (read-string "Quantity sold/removed: " nil 'invtr--remove-stock-quantity-hist)))
   (let* ((contents (buffer-substring-no-properties (point-min) (point-max)))
          (regexp "^\\(#\\+quantity:\\)\s+\\([0-9a-z]+\\)$")
-         (datum (invtr--find-key-valua-pair regexp))
+         (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
          (stock (cdr datum))
          (total (number-to-string (- (string-to-number stock) (string-to-number quantity)))))
@@ -261,7 +261,7 @@ operation."
   "Reset file's cost entry to COST.
 Helper for `invtr-reset-price-discount'."
   (let* ((regexp "^\\(#\\+cost:\\)\s+\\([0-9a-z.,]+\\)$")
-         (datum (invtr--find-key-valua-pair regexp))
+         (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
          (old-cost (cdr datum)))
     (invtr--make-replacement regexp old-cost cost)
@@ -271,7 +271,7 @@ Helper for `invtr-reset-price-discount'."
   "Reset file's discount entry to DISCOUNT.
 Helper for `invtr-reset-price-discount'."
   (let* ((regexp "^\\(#\\+discount:\\)\s+\\([0-9a-z.,]+\\)%$")
-         (datum (invtr--find-key-valua-pair regexp))
+         (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
          (old-discount (cdr datum)))
     (invtr--make-replacement regexp old-discount discount)
@@ -281,7 +281,7 @@ Helper for `invtr-reset-price-discount'."
   "Reset file's truecost entry to TRUECOST.
 Helper for `invtr-reset-price-discount'."
   (let* ((regexp "^\\(#\\+truecost:\\)\s+\\([0-9a-z.,]+\\)$")
-         (datum (invtr--find-key-valua-pair regexp))
+         (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
          (old-truecost (cdr datum)))
     (invtr--make-replacement regexp old-truecost truecost)
