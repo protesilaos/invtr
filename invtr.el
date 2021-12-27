@@ -156,7 +156,7 @@ NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
          (id (format-time-string usls-id))
          (date (format-time-string "%F"))
          (cost (format "%.2f" (read-number "Cost of item: " nil 'invtr--cost-history)))
-         (discount (format "%s%%" (read-number "Did the cost include a discount? (number without % sign): " nil 'invtr--discount-history)))
+         (discount (format "%s%%" (read-number "Discount? (number without % sig or '0'): " nil 'invtr--discount-history)))
          (productID (read-string "Product number/code (from producer): " nil 'invtr--productID-history))
          (producer (read-string "Producer or supplier and Invoice No. (e.g. NAME #123456): " nil 'invtr--producer-history))
          (price (format "%.2f" (read-number "Price we sell at: " nil 'invtr--price-history)))
