@@ -148,8 +148,8 @@ corresponding fields."
         (t
          "\n"))))))
 
-(defvar invtr--add-acquisition-quantity-hist '())
-(defvar invtr--add-acquisition-invoice-hist '())
+(defvar invtr--add-acquisition-quantity-history '())
+(defvar invtr--add-acquisition-invoice-history '())
 
 (defun invtr--maybe-add-records-heading ()
   "Add a heading for records, if necessary."
@@ -179,8 +179,8 @@ operation."
   "Add acquisition record for QUANTITY with INVOICE-CODE."
   (interactive
    (list
-    (read-string "Quantity added: " nil 'invtr--add-acquisition-quantity-hist)
-    (read-string "New invoice code: " nil 'invtr--add-acquisition-invoice-hist)))
+    (read-string "Quantity added: " nil 'invtr--add-acquisition-quantity-history)
+    (read-string "New invoice code: " nil 'invtr--add-acquisition-invoice-history)))
   (let* ((regexp "^\\(#\\+quantity:\\)\s+\\([0-9a-z]+\\)$")
          (datum (invtr--find-key-valua-pair regexp))
          (key (car datum))
