@@ -143,26 +143,35 @@ NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
     ""))
 
 ;;;###autoload
-(defun invtr-usls-new-note ()
-  "Variant of `usls-new-note'."
-  (interactive)
+(defun invtr-new-record (title categories cost discount productID producer price quantity dimensions weight)
+  "Produce a new record for the inventory at `invtr-directory'.
+
+When called interactively, prompt for TITLE, CATEGORIES, COST,
+DISCOUNT, PRODUCTID, PRODUCER, PRICE, QUANTITY.  It will also ask
+for DIMENSIONS and WEIGHT though those can be left as empty to be
+ignored (just type RET at the prompt).
+
+Internally, this is a variant of `usls-new-note'."
+  (interactive
+   (list
+    (read-string "File title of inventory item: " nil 'usls--title-history)
+    (let ((usls-directory invtr-directory) ; We need this to infer correct categories
+          (usls-known-categories invtr-known-categories))
+      (usls--categories-prompt))
+    (format "%.2f" (read-number "Cost of item: " nil 'invtr--cost-history))
+    (format "%s%%" (read-number "Discount? (number without % sig or '0'): " nil 'invtr--discount-history))
+    (read-string "Product number/code (from producer): " nil 'invtr--productID-history)
+    (read-string "Producer or supplier and Invoice No. (e.g. NAME #123456): " nil 'invtr--producer-history)
+    (format "%.2f" (read-number "Price we sell at: " nil 'invtr--price-history))
+    (read-string "Total quantity (e.g. '50' for pieces, '2x10' for sets): " nil 'invtr--quantity-history)
+    (read-string "Dimensions (e.g 200x100cm): " nil 'invtr--dimensions-history)
+    (read-string "Weight (e.g 150g): " nil 'invtr--weight-history)))
   (let* ((usls-file-type-extension ".org")
-         (usls-directory invtr-directory)
-         (usls-known-categories invtr-known-categories)
-         (title (read-string "File title of inventory item: " nil 'usls--title-history))
-         (categories (usls--categories-prompt))
          (slug (usls--sluggify title))
          (path (file-name-as-directory usls-directory))
          (id (format-time-string usls-id))
          (date (format-time-string "%F"))
-         (cost (format "%.2f" (read-number "Cost of item: " nil 'invtr--cost-history)))
-         (discount (format "%s%%" (read-number "Discount? (number without % sig or '0'): " nil 'invtr--discount-history)))
-         (productID (read-string "Product number/code (from producer): " nil 'invtr--productID-history))
-         (producer (read-string "Producer or supplier and Invoice No. (e.g. NAME #123456): " nil 'invtr--producer-history))
-         (price (format "%.2f" (read-number "Price we sell at: " nil 'invtr--price-history)))
-         (quantity (read-string "Total quantity (e.g. '50' for pieces, '2x10' for sets): " nil 'invtr--quantity-history))
-         (dimensions (read-string "Dimensions (e.g 200x100cm): " nil 'invtr--dimensions-history))
-         (weight (read-string "Weight (e.g 150g): " nil 'invtr--weight-history))
+         (profit (format "%s%%" (invtr-percentage-change (string-to-number cost) (string-to-number price))))
          (filename (invtr--file-name-construction path id categories slug dimensions weight price))
          (truecost (invtr--new-truecost-from-discount cost discount))
          (dimensions-p (and dimensions (not (string-empty-p dimensions))))
@@ -180,6 +189,7 @@ NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
                "#+producer:   " producer "\n"
                "#+productID:  " productID "\n"
                "#+price:      " price "\n"
+               "#+profit:     " profit "\n"
                "#+quantity:   " quantity "\n")
        (cond
         ((and dimensions-p weight-p)
@@ -192,6 +202,20 @@ NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
          (concat "#+weight:     " weight "\n"))
         (t
          "\n"))))))
+
+;; Test for the above
+
+;; (invtr-new-record
+;;  "This is a test"
+;;  '("one" "two" "three")
+;;  "2.15"
+;;  "30"
+;;  "12345567101092"
+;;  "Name #098765"
+;;  "10"
+;;  "40"
+;;  "10x20cm"
+;;  "30g")
 
 (defvar invtr--add-acquisition-quantity-history '())
 (defvar invtr--add-acquisition-invoice-history '())
