@@ -102,6 +102,21 @@ corresponding fields."
 ;;   (invtr--file-name-construction path id categories slug dimensions weight price))
 
 ;; NOTE 2021-12-27: Copied from my prot-common.el
+(defun invtr-percentage-change (n-original n-final)
+  "Find percentage change between N-ORIGINAL and N-FINAL numbers.
+
+When the percentage is not an integer, it is rounded to 4
+floating points: 16.666666666666664 => 16.667."
+  (unless (numberp n-original)
+    (user-error "N-ORIGINAL must satisfy numberp"))
+  (unless (numberp n-final)
+    (user-error "N-FINAL must satisfy numberp"))
+  (let* ((difference (float (abs (- n-original n-final))))
+         (n (* (/ difference n-original) 100))
+         (round (floor n)))
+    (if (> n round) (string-to-number (format "%0.4f" n)) round)))
+
+;; NOTE 2021-12-27: Copied from my prot-common.el
 (defun invtr-reverse-percentage (number percent change-p)
   "Determine the original value of NUMBER given PERCENT.
 
