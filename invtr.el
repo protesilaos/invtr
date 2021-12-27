@@ -208,15 +208,20 @@ NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
   (re-search-forward regexp)
   (cons (match-string-no-properties 1) (match-string-no-properties 2)))
 
-(defun invtr--make-replacement (regexp stock total)
+(defun invtr--make-replacement (regexp stock total &optional float-p)
   "Help `invtr-add-acquisition', `invtr-remove-stock' restock.
 REGEXP is the key to search for in the file.  STOCK is the
 available quantity.  TOTAL is the stock after the performed
-operation."
+operation.
+
+If optional FLOAT-P the inserted number is added with two decimal
+points, such as 5 => 5.00."
   (goto-char (point-min))
   (re-search-forward regexp nil t)
   (re-search-backward stock nil t)
-  (replace-match total)
+  (if float-p
+      (replace-match (format "%.2f" (string-to-number total)))
+    (replace-match total))
   (invtr--maybe-add-records-heading)
   (goto-char (point-max)))
 
@@ -264,7 +269,7 @@ Helper for `invtr-reset-price-discount'."
          (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
          (old-cost (cdr datum)))
-    (invtr--make-replacement regexp old-cost cost)
+    (invtr--make-replacement regexp old-cost cost :float-p)
     (cons old-cost cost)))
 
 (defun invtr--reset-discount (discount)
@@ -284,7 +289,7 @@ Helper for `invtr-reset-price-discount'."
          (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
          (old-truecost (cdr datum)))
-    (invtr--make-replacement regexp old-truecost truecost)
+    (invtr--make-replacement regexp old-truecost truecost :float-p)
     (cons old-truecost truecost)))
 
 ;;;###autoload
