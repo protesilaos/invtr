@@ -133,9 +133,8 @@ NUMBER must satisfy `numberp', while PERCENT must be `natnump'."
          (n (if change-p pc-change (float (- 1 pc-change)))))
     (/ number n)))
 
-(defun invtr--new-note-discount (cost discount)
-  "Find the original value of COST given DISCOUNT.
-Used in `invtr-usls-new-note'."
+(defun invtr--new-truecost-from-discount (cost discount)
+  "Find the original value of COST given DISCOUNT."
   (if (and discount (not (string-empty-p discount)))
       (format "%.2f"
               (invtr-reverse-percentage (string-to-number cost)
