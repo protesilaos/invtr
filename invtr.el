@@ -313,7 +313,7 @@ Helper for `invtr-reset-price-discount'."
      ;; NOTE the (% X Y) is not Lisp notation.  It just makes it easier
      ;; to parse a long list of such entries with + (acquisitions), -
      ;; (sales), % (price changes).
-     (format "#+cost: %s (%% %s %s) => %s :: Old cost, discount, true cost: (%% %s %s) => %s\n"
+     (format "#+calc: %s (%% %s %s) => %s :: Old cost, discount, true cost: (%% %s %s) => %s\n"
              (format-time-string "%F") cost discount truecost
              old-cost old-discount old-truecost))))
 
