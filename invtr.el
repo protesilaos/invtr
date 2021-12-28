@@ -386,11 +386,50 @@ This function is called by `invtr-create-receipt'."
          (price (cdr (invtr--find-key-value-pair "^\\(#\\+price:\\)\s+\\([0-9_,.]+\\)$")))
          (date (format-time-string "%F")))
     (with-current-buffer (pop-to-buffer (format "*invtr receipt for: %s on %s*" id date))
+      (delete-region (point-min) (point-max))
       (funcall #'invtr--single-item-receipt quantity price id title))))
 
-;; TODO 2021-12-28: We need a general-purpose command that will allow us
-;; to accumulate sales of multiple items in a single receipt.
-
+;;;###autoload
+(defun invtr-create-receipt-multiple (items)
+  "Produce receipt for ITEMS (files) from the inventory."
+  (interactive
+   (list
+    (completing-read-multiple "Prepare receipt for items: " (usls--directory-files invtr-directory))))
+  (let (entries total-cost)
+    (dolist (file items)
+      (with-current-buffer (find-file file)
+        (let* ((title (cdr (invtr--find-key-value-pair "^\\(#\\+title:\\)\s+\\(.+\\)$")))
+               (id (cdr (invtr--find-key-value-pair "^\\(#\\+orig_id:\\)\s+\\([0-9_]+\\)$")))
+               (price (cdr (invtr--find-key-value-pair "^\\(#\\+price:\\)\s+\\([0-9_,.]+\\)$")))
+               (quantity (read-string (format "Quantity sold for %s: " id) nil 'invtr--remove-stock-quantity-hist))
+               (sum (format "%.2f" (* (string-to-number price) (string-to-number quantity)))))
+          (funcall #'invtr-remove-stock quantity)
+          (push (format "%s  %s\n%s %s x %s\n"
+                        id title
+                        "                 .........  "
+                        quantity price)
+                entries)
+          (push (string-to-number sum) total-cost))))
+    ;; TODO 2021-12-28: Make this more abstract as in
+    ;; `invtr-create-receipt'.  Also, we should break the templates into
+    ;; variable and constant parts.
+    (with-current-buffer (pop-to-buffer "*invtr multi-receipt*")
+      (delete-region (point-min) (point-max))
+      (let ((receiptid (format-time-string "%H%M%S_%d%m%Y")))
+        (insert
+         (concat
+          "Definitely not real company Ltd." "\n"
+          "\n\n"
+          "Sales receipt   #" receiptid      "\n"
+          "================================" "\n"
+          "\n\n")))
+      (apply #'insert entries)
+      (let ((lumpsum (number-to-string (apply #'+ total-cost))))
+        (insert
+         (concat
+          "\n\n"
+          "                             " "———" "\n"
+          "Total cost                   " lumpsum "\n"))))))
 
 ;;;; Minor mode setup
 
