@@ -173,7 +173,7 @@ Internally, this is a variant of `usls-new-note'."
     (read-string "Weight (e.g 150g): " nil 'invtr--weight-history)))
   (let* ((usls-file-type-extension ".org")
          (slug (usls--sluggify title))
-         (path (file-name-as-directory usls-directory))
+         (path (invtr--directory))
          (id (format-time-string usls-id))
          (date (format-time-string "%F"))
          (profit (format "%s%%" (invtr-percentage-change (string-to-number cost) (string-to-number price))))
