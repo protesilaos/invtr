@@ -53,7 +53,7 @@
 (defvar invtr-known-categories
   '("plastic" "metal" "wood" "glass")
   "List of user-defined categories.
-Note that `invtr-usls-new-note' can accept an arbitrary category
+Note that `invtr-new-record' can accept an arbitrary category
 and that categories are inferred from existing files, all of
 which are available for completion.")
 
@@ -68,7 +68,7 @@ which are available for completion.")
 (defvar invtr--weight-history '())
 
 (defun invtr--file-name-construction (path id categories slug dimensions weight price)
-  "Construct file name of `invtr-usls-new-note'.
+  "Construct file name of `invtr-new-record'.
 Catenate PATH, ID, CATEGORIES, SLUG, DIMENSIONS, WEIGHT, PRICE in
 this order.  The dimensions and weight can be nil, both at once
 or separately.  In that case the constructed name will omit their
