@@ -380,7 +380,7 @@ This function is called by `invtr-create-receipt'."
   "Produce receipt for QUANTITY of stock."
   (interactive
    (list
-    (read-string "Quantity sold/removed: " nil 'invtr--remove-stock-quantity-hist)))
+    (read-string "Quantity sold: " nil 'invtr--remove-stock-quantity-hist)))
   (let* ((title (cdr (invtr--find-key-value-pair "^\\(#\\+title:\\)\s+\\(.+\\)$")))
          (id (cdr (invtr--find-key-value-pair "^\\(#\\+orig_id:\\)\s+\\([0-9_]+\\)$")))
          (price (cdr (invtr--find-key-value-pair "^\\(#\\+price:\\)\s+\\([0-9_,.]+\\)$")))
