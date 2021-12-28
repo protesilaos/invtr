@@ -353,10 +353,8 @@ Helper for `invtr-reset-price-discount'."
             (string-match-p invtr-directory default-directory))
     (usls-mode 1)))
 
-;; FIXME 2021-12-26: These should not stay like this.
+;; FIXME 2021-12-26: This should not stay like this.
 (add-hook 'dired-mode-hook #'invtr-usls-mode-activate)
-
-(define-key global-map (kbd "C-c n I") #'invtr-usls-new-note)
 
 (provide 'invtr)
 
