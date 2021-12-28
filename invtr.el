@@ -349,6 +349,31 @@ Helper for `invtr-reset-price-discount'."
              old-cost old-discount old-truecost))))
 
 ;; TODO 2021-12-28: The receipt's template should be a defcustom.
+(defvar invtr-receipt-template-function #'invtr--single-item-receipt
+  "Function that produces a template for `invtr-create-receipt'.
+It should accept a QUANTITY argument, followed by a PRICE and
+TITLE of the item being recorded.
+
+The `invtr--single-item-receipt' serves as a demo.")
+
+(defun invtr--single-item-receipt (quantity price id title)
+  "Produce receipt template given QUANTITY, PRICE, ID, TITLE.
+This function is called by `invtr-create-receipt'."
+  (let ((receiptid (format-time-string "%H%M%S_%d%m%Y"))
+        (sum (format "%.2f" (* (string-to-number price) (string-to-number quantity)))))
+    (insert
+     (concat
+      "Definitely not real company Ltd." "\n"
+      "\n\n"
+      "Sales receipt   #" receiptid      "\n"
+      "================================" "\n"
+      "\n\n"
+      id "  " title "\n"
+      "                 .........  " quantity
+      " x " price   "\n"
+      "\n\n"
+      "                            " "———" "\n"
+      "Total cost                  " sum "\n"))))
 
 ;;;###autoload
 (defun invtr-create-receipt (quantity)
@@ -356,22 +381,12 @@ Helper for `invtr-reset-price-discount'."
   (interactive
    (list
     (read-string "Quantity sold/removed: " nil 'invtr--remove-stock-quantity-hist)))
-  (let* ((id (cdr (invtr--find-key-value-pair "^\\(#\\+orig_id:\\)\s+\\([0-9_]+\\)$")))
+  (let* ((title (cdr (invtr--find-key-value-pair "^\\(#\\+title:\\)\s+\\(.+\\)$")))
+         (id (cdr (invtr--find-key-value-pair "^\\(#\\+orig_id:\\)\s+\\([0-9_]+\\)$")))
          (price (cdr (invtr--find-key-value-pair "^\\(#\\+price:\\)\s+\\([0-9_,.]+\\)$")))
-         (sum (format "%.2f" (* (string-to-number price) (string-to-number quantity))))
-         (date (format-time-string "%F"))
-         (receiptid (format-time-string "%H%M%S_%d%m%Y")))
+         (date (format-time-string "%F")))
     (with-current-buffer (pop-to-buffer (format "*invtr receipt for: %s on %s*" id date))
-      (insert
-       (concat
-        "Definitely not real company Ltd." "\n"
-        "\n\n"
-        "Sales receipt   #" receiptid      "\n"
-        "================================" "\n"
-        "\n\n"
-        id "  .........  " quantity " x " price  "\n"
-        "\n\n"
-        "Total cost:                 " sum "\n")))))
+      (funcall #'invtr--single-item-receipt quantity price id title))))
 
 ;; TODO 2021-12-28: We need a general-purpose command that will allow us
 ;; to accumulate sales of multiple items in a single receipt.
