@@ -344,6 +344,8 @@ Helper for `invtr-reset-price-discount'."
              (format-time-string "%F") cost discount truecost
              old-cost old-discount old-truecost))))
 
+;;;; Minor mode setup
+
 (defun invtr-usls-mode-activate ()
   "Activate usls mode when inside `invtr-directory'."
   (when (or (string-match-p (expand-file-name invtr-directory) default-directory)
