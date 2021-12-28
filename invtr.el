@@ -272,10 +272,6 @@ points, such as 5 => 5.00."
 
 (defvar invtr--remove-stock-quantity-hist '())
 
-(defvar invtr--remove-stock-hook nil
-  "Hook that runs after `invtr-remove-stock'.
-Use it to, for example, trigger a function that produces a receipt.")
-
 ;;;###autoload
 (defun invtr-remove-stock (quantity)
   "Remove QUANTITY from stock."
@@ -291,8 +287,7 @@ Use it to, for example, trigger a function that produces a receipt.")
     (invtr--make-replacement regexp stock total)
     (insert
      (format "#+sell: %s      (- %s %s) => %s\n"
-             (format-time-string "%F") stock quantity total)))
-  (run-hooks 'invtr--remove-stock-hook))
+             (format-time-string "%F") stock quantity total))))
 
 (defun invtr--reset-cost (cost)
   "Reset file's cost entry to COST.
