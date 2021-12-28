@@ -61,6 +61,7 @@ Note that `invtr-new-record' can accept an arbitrary category
 and that categories are inferred from existing files, all of
 which are available for completion.")
 
+(defvar invtr--title-history '())
 (defvar invtr--cost-history '())
 (defvar invtr--discount-history '())
 (defvar invtr--productID-history '())
@@ -158,7 +159,7 @@ ignored (just type RET at the prompt).
 Internally, this is a variant of `usls-new-note'."
   (interactive
    (list
-    (read-string "File title of inventory item: " nil 'usls--title-history)
+    (read-string "File title of inventory item: " nil 'invtr--title-history)
     (let ((usls-directory (invtr--directory)) ; We need this to infer correct categories
           (usls-known-categories invtr-known-categories))
       (usls--categories-prompt))
