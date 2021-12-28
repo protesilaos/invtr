@@ -49,6 +49,10 @@
 ;; TODO 2021-12-26: Make this a `defcustom'.
 (defvar invtr-directory (expand-file-name "~/Documents/inventory/"))
 
+(defun invtr--directory ()
+  "Valid name format for `invtr-directory'."
+  (file-name-as-directory invtr-directory))
+
 ;; TODO 2021-12-26: Make this a `defcustom'.
 (defvar invtr-known-categories
   '("plastic" "metal" "wood" "glass")
@@ -155,7 +159,7 @@ Internally, this is a variant of `usls-new-note'."
   (interactive
    (list
     (read-string "File title of inventory item: " nil 'usls--title-history)
-    (let ((usls-directory invtr-directory) ; We need this to infer correct categories
+    (let ((usls-directory (invtr--directory)) ; We need this to infer correct categories
           (usls-known-categories invtr-known-categories))
       (usls--categories-prompt))
     (format "%.2f" (read-number "Cost of item: " nil 'invtr--cost-history))
@@ -437,7 +441,7 @@ receipt is for.  If ENTITY is nil the field will be left blank."
   (interactive
    (list
     (completing-read-multiple "Prepare receipt for items: "
-                              (usls--directory-files invtr-directory)
+                              (usls--directory-files (invtr--directory))
                               nil t nil 'invtr--receipt-multi-items-history)
     (read-string "For whom is this receipt? " nil 'invtr--receipt-multi-entity-history)))
   (let (entries total-cost)
@@ -465,8 +469,8 @@ receipt is for.  If ENTITY is nil the field will be left blank."
 
 (defun invtr-usls-mode-activate ()
   "Activate usls mode when inside `invtr-directory'."
-  (when (or (string-match-p (expand-file-name invtr-directory) default-directory)
-            (string-match-p (abbreviate-file-name invtr-directory) default-directory)
+  (when (or (string-match-p (abbreviate-file-name invtr-directory) default-directory)
+            (string-match-p (invtr--directory) default-directory)
             (string-match-p invtr-directory default-directory))
     (usls-mode 1)))
 
