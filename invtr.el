@@ -389,12 +389,57 @@ This function is called by `invtr-create-receipt'."
       (delete-region (point-min) (point-max))
       (funcall invtr-receipt-template-function quantity price id title))))
 
+(defvar invtr-receipt-multi-template-function #'invtr--multi-item-receipt
+  "Function to handle `invtr-create-receipt-multiple' output.
+It should accept a list of strings for ENTRIES and another list
+of number strings for the calculation of TOTAL-COST.  An ENTITY
+to whom the receipt is for is optional.
+
+The `invtr--multi-item-receipt' provides a concrete example.")
+
+(defun invtr--multi-item-receipt (entries total-cost &optional entity)
+  "Prepare receipt for `invtr-create-receipt-multiple'.
+
+ENTRIES is a list of strings that holds information about the
+items being sold.  The TOTAL-COST is a list of number strings
+that must be converted into a lump sum.
+
+Optional ENTITY is a string holding the name of the person for
+the receipt is for."
+  (let* ((receiptid (format-time-string "%H%M%S_%d%m%Y"))
+         (receipt-heading (if entity
+                              (format "Receipt #%s for %s\n" receiptid entity)
+                            (format "Receipt #%s\n" receiptid entity)))
+         (receipt-heading-sep (make-string (1- (length receipt-heading)) ?=)))
+    (insert
+     (concat
+      "Definitely not real company Ltd." "\n"
+      "\n\n"
+      receipt-heading
+      receipt-heading-sep
+      "\n\n")))
+  (apply #'insert entries)
+  (let ((lumpsum (format "%.2f" (apply #'+ total-cost))))
+    (insert
+     (concat
+      "\n\n"
+      "                             " "———" "\n"
+      "Total cost                   " lumpsum "\n"))))
+
+(defvar invtr--receipt-multi-items-history '())
+(defvar invtr--receipt-multi-entity-history '())
+
 ;;;###autoload
-(defun invtr-create-receipt-multiple (items)
-  "Produce receipt for ITEMS (files) from the inventory."
+(defun invtr-create-receipt-multiple (items &optional entity)
+  "Produce receipt for ITEMS (files) from the inventory.
+Optional ENTITY is the natural or legal personal to whom the
+receipt is for.  If ENTITY is nil the field will be left blank."
   (interactive
    (list
-    (completing-read-multiple "Prepare receipt for items: " (usls--directory-files invtr-directory))))
+    (completing-read-multiple "Prepare receipt for items: "
+                              (usls--directory-files invtr-directory)
+                              nil t nil 'invtr--receipt-multi-items-history)
+    (read-string "For whom is this receipt? " nil 'invtr--receipt-multi-entity-history)))
   (let (entries total-cost)
     (dolist (file items)
       (with-current-buffer (find-file file)
@@ -404,32 +449,17 @@ This function is called by `invtr-create-receipt'."
                (quantity (read-string (format "Quantity sold for %s: " id) nil 'invtr--remove-stock-quantity-hist))
                (sum (format "%.2f" (* (string-to-number price) (string-to-number quantity)))))
           (funcall #'invtr-remove-stock quantity)
+          ;; TODO 2021-12-28: Maybe we should abstract this like we do
+          ;; for `invtr-receipt-multi-template-function'?
           (push (format "%s  %s\n%s %s x %s\n"
                         id title
                         "                 .........  "
                         quantity price)
                 entries)
           (push (string-to-number sum) total-cost))))
-    ;; TODO 2021-12-28: Make this more abstract as in
-    ;; `invtr-create-receipt'.  Also, we should break the templates into
-    ;; variable and constant parts.
     (with-current-buffer (pop-to-buffer "*invtr multi-receipt*")
       (delete-region (point-min) (point-max))
-      (let ((receiptid (format-time-string "%H%M%S_%d%m%Y")))
-        (insert
-         (concat
-          "Definitely not real company Ltd." "\n"
-          "\n\n"
-          "Sales receipt   #" receiptid      "\n"
-          "================================" "\n"
-          "\n\n")))
-      (apply #'insert entries)
-      (let ((lumpsum (format "%.2f" (apply #'+ total-cost))))
-        (insert
-         (concat
-          "\n\n"
-          "                             " "———" "\n"
-          "Total cost                   " lumpsum "\n"))))))
+      (funcall invtr-receipt-multi-template-function entries total-cost entity))))
 
 ;;;; Minor mode setup
 
