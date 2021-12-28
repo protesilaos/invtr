@@ -424,7 +424,7 @@ This function is called by `invtr-create-receipt'."
           "================================" "\n"
           "\n\n")))
       (apply #'insert entries)
-      (let ((lumpsum (number-to-string (apply #'+ total-cost))))
+      (let ((lumpsum (format "%.2f" (apply #'+ total-cost))))
         (insert
          (concat
           "\n\n"
