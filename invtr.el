@@ -387,7 +387,7 @@ This function is called by `invtr-create-receipt'."
          (date (format-time-string "%F")))
     (with-current-buffer (pop-to-buffer (format "*invtr receipt for: %s on %s*" id date))
       (delete-region (point-min) (point-max))
-      (funcall #'invtr--single-item-receipt quantity price id title))))
+      (funcall invtr-receipt-template-function quantity price id title))))
 
 ;;;###autoload
 (defun invtr-create-receipt-multiple (items)
