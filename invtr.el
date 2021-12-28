@@ -352,6 +352,7 @@ Helper for `invtr-reset-price-discount'."
 
 ;;;###autoload
 (defun invtr-create-receipt (quantity)
+  "Produce receipt for QUANTITY of stock."
   (interactive
    (list
     (read-string "Quantity sold/removed: " nil 'invtr--remove-stock-quantity-hist)))
