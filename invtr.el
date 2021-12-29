@@ -402,52 +402,90 @@ to whom the receipt is for is optional.
 
 The `invtr--multi-item-receipt' provides a concrete example.")
 
-(defun invtr--multi-item-receipt (entries total-cost &optional entity)
+(defun invtr--multi-item-receipt (receiptid entries total-cost entity &optional phone address mail)
   "Prepare receipt for `invtr-create-receipt-multiple'.
 
-ENTRIES is a list of strings that holds information about the
-items being sold.  The TOTAL-COST is a list of number strings
-that must be converted into a lump sum.
+RECEIPTID is the unique timestamp of the receipt.  ENTRIES is a
+list of strings that holds information about the items being
+sold.  The TOTAL-COST is a list of number strings that must be
+converted into a lump sum.
 
-Optional ENTITY is a string holding the name of the person for
-the receipt is for."
-  (let* ((receiptid (format-time-string "%H%M%S_%d%m%Y"))
-         (receipt-heading (if entity
-                              (format "Receipt #%s for %s\n" receiptid entity)
-                            (format "Receipt #%s\n" receiptid entity)))
-         (receipt-heading-sep (make-string (1- (length receipt-heading)) ?=)))
+ENTITY is a string holding the name of the person for the receipt
+is for.  Optional PHONE, ADDRESS, MAIL are strings that describe
+the ENTITY."
+  (let* ((receipt-heading
+          (cond
+           ((and (and phone (not (string-empty-p phone)))
+                 (and address (not (string-empty-p address)))
+                 (and mail (not (string-empty-p mail))))
+            (concat "Receipt   #" receiptid "\n"
+                    "--------------------------" "\n"
+                    "Buyer:    " entity    "\n"
+                    "Phone:    " phone     "\n"
+                    "Address:  " address   "\n"
+                    "Mail:     " mail     "\n"))
+           ((and (and phone (not (string-empty-p phone)))
+                 (and address (not (string-empty-p address))))
+            (concat "Receipt   #" receiptid "\n"
+                    "--------------------------" "\n"
+                    "Buyer:    " entity    "\n"
+                    "Phone:    " phone     "\n"
+                    "Address:  " address   "\n"))
+           ((and phone (not (string-empty-p phone)))
+            (concat "Receipt   #" receiptid "\n"
+                    "--------------------------" "\n"
+                    "Buyer:    " entity    "\n"
+                    "Phone:    " phone     "\n"))
+           (t
+            (concat "Receipt   #" receiptid "\n"
+                    "--------------------------" "\n"
+                    "Buyer:    " entity    "\n"))))
+         (receipt-heading-sep (make-string 60 ?=)))
     (insert
      (concat
       "Definitely not real company Ltd." "\n"
       "\n\n"
       receipt-heading
       receipt-heading-sep
-      "\n\n")))
-  (apply #'insert entries)
-  (let ((lumpsum (format "%.2f" (apply #'+ total-cost))))
-    (insert
-     (concat
-      "\n\n"
-      "                             " "———" "\n"
-      "Total cost                   " lumpsum "\n"))))
+      "\n\n\n\n"))
+    (apply #'insert entries)
+    (let ((lumpsum (format "%.2f" (apply #'+ total-cost))))
+      (insert
+       (concat
+        "\n"
+        "                             " "———" "\n"
+        "Total cost                   " lumpsum "\n")))))
 
 (defvar invtr--receipt-multi-items-history '())
 (defvar invtr--receipt-multi-entity-history '())
 
+(defun invtr--multi-item-receipt-client-prompt ()
+  "Prompt for client with completion, when appropriate."
+  (if-let ((data (invtr--collate-client-data))
+           (prompt "For whom is this receipt? "))
+      ;; NOTE 2021-12-29: Should we REQUIRE-MATCH in this case?
+      (completing-read prompt data nil t nil 'invtr--receipt-multi-entity-history)
+    (read-string prompt nil 'invtr--receipt-multi-entity-history)))
+
 ;;;###autoload
-(defun invtr-create-receipt-multiple (items &optional entity)
+(defun invtr-create-receipt-multiple (items entity)
   "Produce receipt for ITEMS (files) from the inventory.
-Optional ENTITY is the natural or legal personal to whom the
-receipt is for.  If ENTITY is nil the field will be left blank."
+ENTITY is the natural or legal personal to whom the receipt is
+for.  If ENTITY is nil the field will be left blank."
   (interactive
    (list
     (completing-read-multiple "Prepare receipt for items: "
-                              (usls--directory-files (invtr--directory))
+                              (let* ((dir (invtr--directory))
+                                     (default-directory dir))
+                                (usls--directory-files dir))
                               nil t nil 'invtr--receipt-multi-items-history)
-    (read-string "For whom is this receipt? " nil 'invtr--receipt-multi-entity-history)))
-  (let (entries total-cost)
+    (invtr--multi-item-receipt-client-prompt)))
+  (let ((default-directory (invtr--directory))
+        (receiptid (format-time-string "%H%M%S_%d%m%Y"))
+        (entries)
+        (total-cost))
     (dolist (file items)
-      (with-current-buffer (find-file file)
+      (with-current-buffer (find-file file) ; test `find-file-noselect'.
         (let* ((title (cdr (invtr--find-key-value-pair "^\\(#\\+title:\\)\s+\\(.+\\)$")))
                (id (cdr (invtr--find-key-value-pair "^\\(#\\+orig_id:\\)\s+\\([0-9_]+\\)$")))
                (price (cdr (invtr--find-key-value-pair "^\\(#\\+price:\\)\s+\\([0-9_,.]+\\)$")))
@@ -462,9 +500,80 @@ receipt is for.  If ENTITY is nil the field will be left blank."
                         quantity price)
                 entries)
           (push (string-to-number sum) total-cost))))
-    (with-current-buffer (pop-to-buffer "*invtr multi-receipt*")
-      (delete-region (point-min) (point-max))
-      (funcall invtr-receipt-multi-template-function entries total-cost entity))))
+    ;; TODO 2021-12-29: Use find-file with the default-directory being
+    ;; an `invtr-receipt-directory'.
+    (with-current-buffer (pop-to-buffer (format "%s--%s" receiptid entity))
+      (if-let* ((data (cdr (assoc entity invtr--client-data))))
+          (let* ((phone (nth 0 data))
+                 (address (nth 1 data))
+                 (mail (nth 2 data))
+                 (a (or address ""))
+                 (m (or mail "")))
+            (funcall invtr-receipt-multi-template-function receiptid entries total-cost entity phone a m))
+        (funcall invtr-receipt-multi-template-function receiptid entries total-cost entity)))))
+
+;;;; Clients
+
+(defvar invtr-client-directory (concat (invtr--directory) "clients")
+  "Subdirectory of `invtr-directory' with client records.")
+
+(defun invtr--client-directory ()
+  "Valid name format for `invtr-client-directory'."
+  (file-name-as-directory invtr-client-directory))
+
+(defun invtr--make-clients-dir ()
+  (unless (file-directory-p path)
+    (make-directory path t)))
+
+(defvar invtr--client-name-history '())
+(defvar invtr--client-phone-history '())
+(defvar invtr--client-adress-history '())
+(defvar invtr--client-email-history '())
+
+;;;###autoload
+(defun invtr-new-client (name &optional phone address email)
+  "Produce a new record of a client at `invtr-client-directory'.
+
+When called interactively, prompt for NAME, PHONE, ADDRESS,
+EMAIL.
+
+Internally, this is a variant of `invtr-new-record' and
+`usls-new-note'."
+  (interactive
+   (list
+    (read-string "Name of client: " nil 'invtr--client-name-history)
+    (read-string "Phone number: " nil 'invtr--client-phone-history)
+    (read-string "Adress: " nil 'invtr--client-address-history)
+    (read-string "Email: " nil 'invtr--client-email-history)))
+  (let* ((usls-file-type-extension ".org")
+         (slug (usls--sluggify name))
+         (path (invtr--client-directory))
+         (filename (format "%s%s%s" path slug usls-file-type-extension)))
+    (usls--make-directory (invtr--client-directory))
+    (with-current-buffer (find-file filename)
+      (insert
+       (concat "#+name:     " name "\n"
+               "#+phone:    " phone "\n"
+               "#+address:  " address "\n"
+               ;; I don't use "email" because Org fontifies it
+               ;; differently...
+               "#+mail:     " email "\n")))))
+
+(defvar invtr--client-data nil)
+
+(defun invtr--collate-client-data ()
+  "Gather client data in `invtr--client-data'."
+  (let* ((dir (invtr--client-directory))
+         (default-directory dir)
+         (files (usls--directory-files dir)))
+    (dolist (file files)
+      (with-current-buffer (find-file-noselect file)
+        (let ((name (cdr (invtr--find-key-value-pair "^\\(#\\+name:\\)\s+\\(.+\\)$")))
+              (phone (cdr (invtr--find-key-value-pair "^\\(#\\+phone:\\)\s+\\(.+\\)$")))
+              (address (cdr (invtr--find-key-value-pair "^\\(#\\+address:\\)\s+\\(.+\\)$")))
+              (email (cdr (invtr--find-key-value-pair "^\\(#\\+mail:\\)\s+\\(.+\\)$"))))
+          (push (list name phone address email) invtr--client-data)))))
+  (delete-dups invtr--client-data))
 
 ;;;; Minor mode setup
 
