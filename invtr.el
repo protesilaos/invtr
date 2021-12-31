@@ -300,7 +300,7 @@ With optional ARG, produce a receipt buffer."
 
 (defun invtr--reset-cost (cost)
   "Reset file's cost entry to COST.
-Helper for `invtr-reset-price-discount'."
+Helper for `invtr-reset-cost-discount'."
   (let* ((regexp "^\\(#\\+cost:\\)\s+\\([0-9a-z.,]+\\)$")
          (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
@@ -310,7 +310,7 @@ Helper for `invtr-reset-price-discount'."
 
 (defun invtr--reset-discount (discount)
   "Reset file's discount entry to DISCOUNT.
-Helper for `invtr-reset-price-discount'."
+Helper for `invtr-reset-cost-discount'."
   (let* ((regexp "^\\(#\\+discount:\\)\s+\\([0-9a-z.,]+\\)%$")
          (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
@@ -320,7 +320,7 @@ Helper for `invtr-reset-price-discount'."
 
 (defun invtr--reset-truecost (truecost)
   "Reset file's truecost entry to TRUECOST.
-Helper for `invtr-reset-price-discount'."
+Helper for `invtr-reset-cost-discount'."
   (let* ((regexp "^\\(#\\+truecost:\\)\s+\\([0-9a-z.,]+\\)$")
          (datum (invtr--find-key-value-pair regexp))
          (key (car datum))
@@ -329,7 +329,7 @@ Helper for `invtr-reset-price-discount'."
     (cons old-truecost truecost)))
 
 ;;;###autoload
-(defun invtr-reset-price-discount (cost discount)
+(defun invtr-reset-cost-discount (cost discount)
   "Write COST and recalculate true cost given DISCOUNT."
   (interactive
    (list
