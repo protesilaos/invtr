@@ -328,13 +328,16 @@ Helper for `invtr-reset-cost-discount'."
     (invtr--make-replacement regexp old-truecost truecost :float-p)
     (cons old-truecost truecost)))
 
+(defvar invtr--reset-cost-history '())
+(defvar invtr--reset-cost-discount-history '())
+
 ;;;###autoload
 (defun invtr-reset-cost-discount (cost discount)
   "Write COST and recalculate true cost given DISCOUNT."
   (interactive
    (list
-    (read-string "New cost: " nil 'invtr--add-acquisition-quantity-history)
-    (read-string "New discount (number without %): " nil 'invtr--add-acquisition-invoice-history)))
+    (read-string "New cost: " nil 'invtr--reset-cost-history)
+    (read-string "New discount (number without %): " nil 'invtr--reset-cost-discount-history)))
   (let* ((costs (invtr--reset-cost cost))
          (old-cost (car costs))
          (new-cost (cdr costs))
